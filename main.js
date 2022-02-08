@@ -2,8 +2,7 @@ require('dotenv').config()
 const axios = require("axios");
 const commandLineArgs = require('command-line-args');
 const commandLineUsage = require('command-line-usage');
-
-var FormData = require('form-data');
+const FormData = require('form-data');
 
 const API_URL = `https://api.bitbucket.org/2.0`;
 
@@ -134,7 +133,7 @@ async function main() {
 		username: options.username,
 		password: options.password
 	};
-	
+
 	const packageJson = await getPackageJson(options.repoUserOrOrg, options.repoName, options.repoBranch, auth);
 	const updatedPackgeJson = updatePackageJson(packageJson, options.package, options.version);
 
