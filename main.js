@@ -9,6 +9,7 @@ const API_URL = `https://api.bitbucket.org/2.0`;
 
 async function getPackageJson(userOrOrg, repo, branch, auth) {
 	const result = await axios.get(`${API_URL}/repositories/${userOrOrg}/${repo}/src/${branch}/package.json`, {}, {auth})
+		.catch(tryThrowBetterError);
 	return result.data;
 }
 
@@ -34,20 +35,22 @@ async function createBranch(userOrOrg, repo, sourceBranch, newBranchName, auth) 
 		target: {
 			hash: sourceBranch
 		}
-	}, {auth});
+	}, {auth})
+		.catch(tryThrowBetterError);;
 }
 
 async function uploadNewPackageJson(userOrOrg, repo, branch, packageJson, commitMessage, auth) {
 	var form = new FormData();
 	form.append('branch', branch);
 	form.append('package.json', Buffer.from(JSON.stringify(packageJson, null, 2)), "package.json");
-	form.append('message', "test12334");
+	form.append('message', commitMessage);
 
 
 	return await axios.post(`${API_URL}/repositories/${userOrOrg}/${repo}/src`, form, {
 		headers: form.getHeaders(),
 		auth
 	})
+		.catch(tryThrowBetterError);
 }
 
 
@@ -65,8 +68,15 @@ async function createPR(userOrOrg, repo, sourceBranch, targetBranch, prName, aut
 			}
 		}
 	}, {auth})
+		.catch(tryThrowBetterError);
 }
 
+function tryThrowBetterError(error) {
+	if (error?.response?.data?.error?.message) {
+		throw new Error(`${error.message} - ${error.response.data.error.message}`);	
+	}
+	throw error;
+}
 
 async function main() {
 	// TODO: Update multiple repos at once
@@ -124,28 +134,26 @@ async function main() {
 		username: options.username,
 		password: options.password
 	};
-
+	
 	const packageJson = await getPackageJson(options.repoUserOrOrg, options.repoName, options.repoBranch, auth);
-
 	const updatedPackgeJson = updatePackageJson(packageJson, options.package, options.version);
 
 
 	const date = new Date();
-	const newBranchName = `pjsonUpdater-${date.toISOString().replaceAll(':','.')}-upd-${options.package}-to-${options.version}`;
+	const newBranchName = `pjsonUpdater-${date.toISOString().replaceAll(':','.')}-upd-${options.package}`;
 
 	await createBranch(options.repoUserOrOrg, options.repoName, options.repoBranch, newBranchName, auth);
 	await uploadNewPackageJson(options.repoUserOrOrg, options.repoName, newBranchName, updatedPackgeJson, `Updated ${options.repoName} to ${options.version}`, auth);
-
 	await createPR(options.repoUserOrOrg, options.repoName, newBranchName, options.repoBranch, `Updated ${options.repoName} to ${options.version}`, auth);
 }
 
 main()
 	.then(() => {
-		console.log("package.json updated successfully.");
+		console.log("Created PR for package.json successfully.");
 		process.exit(0);
 	})
 	.catch(err => {
-		console.error(`Failed to update package.json, error: \n${err.name}:${err.message}`);
+		console.error(`${err.name}: ${err.message}`);
 		process.exit(1);
 	});
 
