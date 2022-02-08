@@ -35,7 +35,7 @@ async function createBranch(userOrOrg, repo, sourceBranch, newBranchName, auth) 
 			hash: sourceBranch
 		}
 	}, {auth})
-		.catch(tryThrowBetterError);;
+		.catch(tryThrowBetterError);
 }
 
 async function uploadNewPackageJson(userOrOrg, repo, branch, packageJson, commitMessage, auth) {
