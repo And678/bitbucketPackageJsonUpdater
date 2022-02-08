@@ -1,0 +1,17 @@
+{
+  "name": "redoclyupdatebitbucket",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.25.0",
+    "command-line-args": "^5.2.1",
+    "command-line-usage": "^6.1.1",
+    "form-data": "^4.0.0"
+  }
+}
