@@ -1,3 +1,4 @@
+require('dotenv').config()
 const axios = require("axios");
 const commandLineArgs = require('command-line-args');
 const commandLineUsage = require('command-line-usage');
@@ -33,7 +34,7 @@ async function createBranch(userOrOrg, repo, sourceBranch, newBranchName, auth) 
 		target: {
 			hash: sourceBranch
 		}
-	}).catch(e => console.log(e.response))
+	});
 }
 
 async function uploadNewPackageJson(userOrOrg, repo, branch, packageJson, commitMessage, auth) {
@@ -73,7 +74,7 @@ async function main() {
 	const argOptions = [
 		{ name: 'help', alias: 'h', type: Boolean, description: 'Display this usage guide' },
 		{ name: 'package', alias: 'n', type: String, description: 'Name of the package to update' },
-		{ name: 'version', alias: 'v', type: String, defaultValue: '*', description: 'Needed version of the package' },
+		{ name: 'version', alias: 'v', type: String, description: 'Needed version of the package' },
 		{ name: 'repoName', alias: 'r', type: String, description: 'Name of bitbucket repo to update' },
 		{ name: 'repoUserOrOrg', alias: 'o', type: String, description: 'Owner of the repo (user or organization)' },
 		{ name: 'repoBranch', alias: 'b', type: String, description: 'Target branch of repo to update' },
@@ -81,6 +82,16 @@ async function main() {
 		{ name: 'password', alias: 'p', type: String, description: 'Auth: application password, more info here: https://bitbucket.org/account/settings/app-passwords/' },
 	];
 	const options = commandLineArgs(argOptions)
+
+	// Populate from .env
+
+	argOptions.forEach(opt => {
+		if (!options[opt.name]) {
+			options[opt.name] = process.env[opt.name.toUpperCase()];
+		}
+	});
+
+	console.log(process.env, options);
 
 	if (options.help) {
 		const usage = commandLineUsage([
@@ -93,7 +104,7 @@ async function main() {
 				optionList: argOptions
 			},
 			{
-				content: 'Project home: {underline https://github.com/me/example}'
+				content: 'Project home: {underline https://github.com/And678/bitbucketPackageJsonUpdater}'
 			}
 		]);
 		console.log(usage)

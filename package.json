@@ -12,6 +12,7 @@
     "axios": "^0.25.0",
     "command-line-args": "^5.2.1",
     "command-line-usage": "^6.1.1",
+    "dotenv": "^16.0.0",
     "form-data": "^4.0.0"
   }
 }
