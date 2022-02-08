@@ -38,14 +38,20 @@ Bitbucket package.json updater
 Options
 
   -h, --help                   Display this usage guide                                                      
-  -n, --package string         Name of the package to update                                                 
-  -v, --version string         Needed version of the package                                                 
-  -r, --repoName string        Name of bitbucket repo to update                                              
-  -o, --repoUserOrOrg string   Owner of the repo (user or organization)                                      
-  -b, --repoBranch string      Target branch of repo to update                                               
-  -u, --username string        Auth: user login                                                              
-  -p, --password string        Auth: application password, more info here:                                   
-                               https://bitbucket.org/account/settings/app-passwords/
+  -n, --package string         Name of the package to update (required)                                      
+  -v, --version string         Needed version of the package (required)                                      
+  -r, --repoName string        Name of bitbucket repo to update (required)                                   
+  -o, --repoUserOrOrg string   Owner of the repo (user or organization) (required)                           
+  -b, --repoBranch string      Target branch of repo to update (required)                                    
+  -u, --username string        Auth: user login (required)                                                   
+  -p, --password string        Auth: application password  (required), more info here:                       
+                               https://bitbucket.org/account/settings/app-passwords/                         
+  
+  --prName string              Name of the PR                                                                
+  --prBranchName string        Name of PR branch                                                             
+  --prCommitMessage string     Commit message                                                                
+
+  Project home: https://github.com/And678/bitbucketPackageJsonUpdater
 ```
 
 

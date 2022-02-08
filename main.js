@@ -78,17 +78,31 @@ function tryThrowBetterError(error) {
 }
 
 async function main() {
-	// TODO: Update multiple repos at once
-	// TODO: Add ability to specify PR message and source branch
+	// TODO: Funtionality to update multiple repos at once
 	const argOptions = [
-		{ name: 'help', alias: 'h', type: Boolean, description: 'Display this usage guide' },
-		{ name: 'package', alias: 'n', type: String, description: 'Name of the package to update', required: true},
-		{ name: 'version', alias: 'v', type: String, description: 'Needed version of the package', required: true},
-		{ name: 'repoName', alias: 'r', type: String, description: 'Name of bitbucket repo to update', required: true},
-		{ name: 'repoUserOrOrg', alias: 'o', type: String, description: 'Owner of the repo (user or organization)', required: true},
-		{ name: 'repoBranch', alias: 'b', type: String, description: 'Target branch of repo to update', required: true},
-		{ name: 'username', alias: 'u', type: String, description: 'Auth: user login', required: true},
-		{ name: 'password', alias: 'p', type: String, description: 'Auth: application password, more info here: https://bitbucket.org/account/settings/app-passwords/' , required: true},
+		{ name: 'help', alias: 'h', type: Boolean, description: 'Display this usage guide', required: false },
+
+		// Required args
+		{ name: 'package', alias: 'n', type: String, description: 'Name of the package to update (required)', required: true},
+		{ name: 'version', alias: 'v', type: String, description: 'Needed version of the package (required)', required: true},
+		
+		{ name: 'repoName', alias: 'r', type: String, description: 'Name of bitbucket repo to update (required)', required: true},
+		{ name: 'repoUserOrOrg', alias: 'o', type: String, description: 'Owner of the repo (user or organization) (required)', required: true},
+		{ name: 'repoBranch', alias: 'b', type: String, description: 'Target branch of repo to update (required)', required: true},
+		
+		{ name: 'username', alias: 'u', type: String, description: 'Auth: user login (required)', required: true},
+		{ 
+			name: 'password', 
+			alias: 'p', 
+			type: String, 
+			description: 'Auth: application password  (required), more info here: https://bitbucket.org/account/settings/app-passwords/', 
+			required: true
+		},
+		
+		// Optional args
+		{ name: 'prName', type: String, description: 'Name of the PR', required: false },
+		{ name: 'prBranchName', type: String, description: 'Name of PR branch', required: false },
+		{ name: 'prCommitMessage', type: String, description: 'Commit message', required: false },
 	];
 	const options = commandLineArgs(argOptions)
 
@@ -116,8 +130,20 @@ async function main() {
 		if (!options[opt.name]) {
 			options[opt.name] = process.env[opt.name.toUpperCase()];
 		}
-
 	});
+
+	if (!options.prName) {
+		options.prName = `Updated ${options.repoName} to ${options.version}`;
+	}
+
+	if (!options.prBranchName) {
+		const date = new Date();
+		options.prBranchName = `pjsonUpdater-${date.toISOString().replaceAll(':','.')}-upd-${options.package}`;
+	}
+
+	if (!options.prCommitMessage) {
+		options.prCommitMessage = `Updated ${options.repoName} to ${options.version}`;
+	}	
 
 	// Check for missing required options
 
@@ -137,13 +163,9 @@ async function main() {
 	const packageJson = await getPackageJson(options.repoUserOrOrg, options.repoName, options.repoBranch, auth);
 	const updatedPackgeJson = updatePackageJson(packageJson, options.package, options.version);
 
-
-	const date = new Date();
-	const newBranchName = `pjsonUpdater-${date.toISOString().replaceAll(':','.')}-upd-${options.package}`;
-
-	await createBranch(options.repoUserOrOrg, options.repoName, options.repoBranch, newBranchName, auth);
-	await uploadNewPackageJson(options.repoUserOrOrg, options.repoName, newBranchName, updatedPackgeJson, `Updated ${options.repoName} to ${options.version}`, auth);
-	await createPR(options.repoUserOrOrg, options.repoName, newBranchName, options.repoBranch, `Updated ${options.repoName} to ${options.version}`, auth);
+	await createBranch(options.repoUserOrOrg, options.repoName, options.repoBranch, options.prBranchName, auth);
+	await uploadNewPackageJson(options.repoUserOrOrg, options.repoName, options.prBranchName, updatedPackgeJson, options.prCommitMessage, auth);
+	await createPR(options.repoUserOrOrg, options.repoName, options.prBranchName, options.repoBranch, options.prName, auth);
 }
 
 main()
