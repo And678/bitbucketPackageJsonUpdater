@@ -5,7 +5,7 @@ const commandLineUsage = require('command-line-usage');
 
 var FormData = require('form-data');
 
-const API_URL = `https://api.bitbucket.org/2.0`
+const API_URL = `https://api.bitbucket.org/2.0`;
 
 async function getPackageJson(userOrOrg, repo, branch, auth) {
 	const result = await axios.get(`${API_URL}/repositories/${userOrOrg}/${repo}/src/${branch}/package.json`, {}, {auth})
@@ -29,12 +29,12 @@ function updatePackageJson(packageJson, packageName, version) {
 }
 
 async function createBranch(userOrOrg, repo, sourceBranch, newBranchName, auth) {
-	return await axios.post(`https://${auth.username}:${auth.password}@api.bitbucket.org/2.0/repositories/${userOrOrg}/${repo}/refs/branches`, {
+	return await axios.post(`${API_URL}/repositories/${userOrOrg}/${repo}/refs/branches`, {
 		name: newBranchName,
 		target: {
 			hash: sourceBranch
 		}
-	});
+	}, {auth});
 }
 
 async function uploadNewPackageJson(userOrOrg, repo, branch, packageJson, commitMessage, auth) {
@@ -52,7 +52,7 @@ async function uploadNewPackageJson(userOrOrg, repo, branch, packageJson, commit
 
 
 async function createPR(userOrOrg, repo, sourceBranch, targetBranch, prName, auth) {
-	return await axios.post(`https://${auth.username}:${auth.password}@api.bitbucket.org/2.0/repositories/${userOrOrg}/${repo}/pullrequests`, {
+	return await axios.post(`${API_URL}/repositories/${userOrOrg}/${repo}/pullrequests`, {
 		"title": prName,
 		"source": {
 			"branch": {
@@ -64,7 +64,7 @@ async function createPR(userOrOrg, repo, sourceBranch, targetBranch, prName, aut
 				"name": targetBranch
 			}
 		}
-	}, auth)
+	}, {auth})
 }
 
 
@@ -73,25 +73,15 @@ async function main() {
 	// TODO: Add ability to specify PR message and source branch
 	const argOptions = [
 		{ name: 'help', alias: 'h', type: Boolean, description: 'Display this usage guide' },
-		{ name: 'package', alias: 'n', type: String, description: 'Name of the package to update' },
-		{ name: 'version', alias: 'v', type: String, description: 'Needed version of the package' },
-		{ name: 'repoName', alias: 'r', type: String, description: 'Name of bitbucket repo to update' },
-		{ name: 'repoUserOrOrg', alias: 'o', type: String, description: 'Owner of the repo (user or organization)' },
-		{ name: 'repoBranch', alias: 'b', type: String, description: 'Target branch of repo to update' },
-		{ name: 'username', alias: 'u', type: String, description: 'Auth: user login'},
-		{ name: 'password', alias: 'p', type: String, description: 'Auth: application password, more info here: https://bitbucket.org/account/settings/app-passwords/' },
+		{ name: 'package', alias: 'n', type: String, description: 'Name of the package to update', required: true},
+		{ name: 'version', alias: 'v', type: String, description: 'Needed version of the package', required: true},
+		{ name: 'repoName', alias: 'r', type: String, description: 'Name of bitbucket repo to update', required: true},
+		{ name: 'repoUserOrOrg', alias: 'o', type: String, description: 'Owner of the repo (user or organization)', required: true},
+		{ name: 'repoBranch', alias: 'b', type: String, description: 'Target branch of repo to update', required: true},
+		{ name: 'username', alias: 'u', type: String, description: 'Auth: user login', required: true},
+		{ name: 'password', alias: 'p', type: String, description: 'Auth: application password, more info here: https://bitbucket.org/account/settings/app-passwords/' , required: true},
 	];
 	const options = commandLineArgs(argOptions)
-
-	// Populate from .env
-
-	argOptions.forEach(opt => {
-		if (!options[opt.name]) {
-			options[opt.name] = process.env[opt.name.toUpperCase()];
-		}
-	});
-
-	console.log(process.env, options);
 
 	if (options.help) {
 		const usage = commandLineUsage([
@@ -111,7 +101,24 @@ async function main() {
 		process.exit(0);
 	}
 
-	// TODO: check args validity (!)
+	// Populate missing options from .env
+
+	argOptions.forEach(opt => {
+		if (!options[opt.name]) {
+			options[opt.name] = process.env[opt.name.toUpperCase()];
+		}
+
+	});
+
+	// Check for missing required options
+
+	argOptions.forEach(opt => {
+		if (!options[opt.name] && opt.required) {
+			throw new Error(`Missing required parameter: ${opt.name}`);
+		}
+
+	});
+	
 
 	const auth = {
 		username: options.username,
